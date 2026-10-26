@@ -2,10 +2,6 @@
 
 Búsqueda sobre documentación interna con separación por organización, permisos por grupo, versiones y citas. El servicio conserva el documento que respalda cada respuesta y se abstiene cuando la consulta no tiene suficiente coincidencia textual.
 
-## Contexto y confidencialidad
-
-Este caso de uso forma parte de mi experiencia en soluciones implementadas en producción durante trabajos de consultoría. La versión pública es una implementación independiente con datos sintéticos que permite revisar la arquitectura, los flujos y los controles. Por confidencialidad, no se incluyen la identidad del cliente, su código ni sus registros operativos.
-
 La implementación local usa SQLite y TF-IDF; funciona sin credenciales ni descargas. El modo Ollama utiliza un modelo para seleccionar una fuente entre las recuperadas y devuelve su fragmento original. Así, una respuesta siempre se puede contrastar con un documento y una versión.
 
 ## Diseño y tecnologías
