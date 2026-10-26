@@ -86,6 +86,57 @@ class KnowledgeTests(unittest.TestCase):
         self.assertTrue(self.call(query="vacaciones anticipación")["abstained"])
         self.assertFalse(self.call(action="delete", document_id="leave-policy")["deleted"])
 
+    def test_recreate_advances_version_and_rejects_stale_write(self):
+        self.seed()
+        before = self.call(query="vacaciones anticipación")["sources"][0]
+        self.call(action="delete", document_id="leave-policy")
+        recreated = self.call(action="ingest", documents=[dict(DOCUMENTS[0], text="Las vacaciones requieren veinte días de anticipación.")])
+        self.assertEqual(recreated["documents"][0]["version"], 3)
+        after = self.call(query="vacaciones anticipación")["sources"][0]
+        self.assertEqual(before["chunk_id"], after["chunk_id"])
+        self.assertEqual(after["version"], 3)
+        with self.assertRaisesRegex(ValueError, "version conflict"):
+            self.call(action="ingest", documents=[dict(DOCUMENTS[0], expected_version=1)])
+        self.assertIn("veinte", self.call(query="vacaciones anticipación")["answer"])
+
+    def test_delete_invalidates_previous_expected_version(self):
+        self.seed()
+        self.call(action="delete", document_id="leave-policy")
+        for expected in (0, 1):
+            with self.assertRaisesRegex(ValueError, "version conflict"):
+                self.call(action="ingest", documents=[dict(DOCUMENTS[0], expected_version=expected)])
+
+    def test_missing_delete_does_not_consume_revision(self):
+        self.seed()
+        self.assertTrue(self.call(action="delete", document_id="leave-policy")["deleted"])
+        self.assertFalse(self.call(action="delete", document_id="leave-policy")["deleted"])
+        self.assertEqual(self.call(action="ingest", documents=[DOCUMENTS[0]])["documents"][0]["version"], 3)
+
+    def test_deleted_revision_is_scoped_to_tenant(self):
+        self.seed()
+        self.call(action="delete", document_id="leave-policy")
+        other = self.call(tenant="beta", action="ingest", documents=[dict(DOCUMENTS[0], expected_version=0)])
+        self.assertEqual(other["documents"][0]["version"], 1)
+        self.assertEqual(self.call(action="ingest", documents=[DOCUMENTS[0]])["documents"][0]["version"], 3)
+
+    def test_delete_rollback_restores_content_and_revision(self):
+        self.seed()
+        def fail_after_delete(payload, store):
+            process({"tenant":"alpha", "action":"delete", "document_id":"leave-policy"}, store)
+            raise ValueError("later operation failed")
+        with self.assertRaisesRegex(ValueError, "later operation"):
+            self.store.run({}, uuid.uuid4().hex, fail_after_delete)
+        self.assertEqual(self.call(query="vacaciones anticipación")["sources"][0]["version"], 1)
+        self.call(action="delete", document_id="leave-policy")
+        self.assertEqual(self.call(action="ingest", documents=[DOCUMENTS[0]])["documents"][0]["version"], 3)
+
+    def test_legacy_document_versions_migrate_before_delete(self):
+        self.seed()
+        self.call(action="ingest", documents=[dict(DOCUMENTS[0], text="Las vacaciones requieren veinte días de anticipación.", expected_version=1)])
+        self.store.connection.execute("DROP TABLE document_revisions")
+        self.call(action="delete", document_id="leave-policy")
+        self.assertEqual(self.call(action="ingest", documents=[DOCUMENTS[0]])["documents"][0]["version"], 4)
+
     def test_delete_cannot_cross_tenant(self):
         self.seed()
         self.assertFalse(self.call(tenant="beta", action="delete", document_id="leave-policy")["deleted"])
@@ -95,6 +146,8 @@ class KnowledgeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.call(action="ingest", documents=[DOCUMENTS[0], {"id": "../private", "title": "Invalid", "text": "text"}])
         self.assertTrue(self.call(query="vacaciones anticipación")["abstained"])
+        recreated = self.call(action="ingest", documents=[dict(DOCUMENTS[0], expected_version=0)])
+        self.assertEqual(recreated["documents"][0]["version"], 1)
 
     def test_evaluation_is_measured_on_fixed_fixture(self):
         self.seed()

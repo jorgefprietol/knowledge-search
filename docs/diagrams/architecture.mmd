@@ -1,0 +1,19 @@
+flowchart TB
+    Client["CLI o consola web"] --> API["API con token e idempotencia"]
+    subgraph Local["Servicio local implementado"]
+        API --> Ingest["Ingesta y control de versión"]
+        Ingest --> Chunks["Fragmentos e identificadores estables"]
+        Chunks --> DB["SQLite y auditoría"]
+        API --> Access["Filtro de organización y grupos"]
+        DB --> Access
+        Access --> Rank["Ranking TF-IDF y umbrales"]
+        Rank --> Answer["Extracto citado o abstención"]
+        API --> Eval["Evaluación sobre fixture"]
+    end
+    subgraph Optional["Componentes opcionales por configurar"]
+        N8N["Workflow n8n incluido"]
+        Model["Selector de fuentes Ollama"]
+    end
+    N8N -.-> API
+    Rank -.-> Model
+    Model -.-> Answer

@@ -1,12 +1,12 @@
 {
   "project": "knowledge-search",
-  "verified_at": "2026-10-26T18:02:47.021608+00:00",
+  "verified_at": "2026-10-26T18:56:08.814795+00:00",
   "python": "3.12.14",
   "dataset": "synthetic",
   "checks": {
     "tests": {
       "passed": true,
-      "count": 37
+      "count": 43
     },
     "demo": {
       "passed": true
@@ -15,6 +15,9 @@
       "passed": true
     },
     "workflow": {
+      "passed": true
+    },
+    "documentation": {
       "passed": true
     },
     "documentation_links": {

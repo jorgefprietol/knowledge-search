@@ -10,3 +10,5 @@
 | Dos métricas de evaluación | Distingue recuperación y abstención | Tres casos no permiten estimar calidad real |
 
 Los ejemplos de orquestación y despliegue citados en referencias se usaron como material de estudio. El esquema, el ranking, los fixtures y los controles de acceso de esta implementación se definieron para este servicio.
+
+El registro `document_revisions` conserva revisiones por organización e identificador incluso cuando se elimina el texto indexado. La baja avanza la revisión y la recreación continúa desde allí: versión 1, baja 2 y nueva publicación 3. Una escritura con `expected_version` antiguo falla antes o después de recrear el documento. La migración recoge versiones activas de bases anteriores; una baja de un documento ausente no consume revisión. La cita se identifica por documento, fragmento y versión, aunque la posición del fragmento mantenga su identificador estable.

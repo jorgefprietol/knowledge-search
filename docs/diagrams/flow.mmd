@@ -1,0 +1,13 @@
+flowchart TD
+    Start["Recibir operación autenticada"] --> Action{"¿Ingesta o consulta?"}
+    Action -->|Ingesta| Version["Validar documento y versión esperada"]
+    Version --> Split["Reemplazar fragmentos de forma atómica"]
+    Split --> Audit["Persistir versión y auditoría"]
+    Action -->|Consulta| Access["Filtrar tenant y grupos autorizados"]
+    Access --> Rank["Calcular ranking TF-IDF"]
+    Rank --> Evidence{"¿Supera cobertura y puntuación?"}
+    Evidence -->|No| Abstain["Abstenerse por evidencia insuficiente"]
+    Evidence -->|Sí| Select["Seleccionar fuente local u Ollama"]
+    Select --> Valid{"¿Identificador entre candidatos?"}
+    Valid -->|Sí| Cite["Devolver extracto, documento y versión"]
+    Valid -->|No| Abstain

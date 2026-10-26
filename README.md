@@ -4,6 +4,12 @@ Búsqueda sobre documentación interna con separación por organización, permis
 
 La implementación local usa SQLite y TF-IDF; funciona sin credenciales ni descargas. El modo Ollama utiliza un modelo para seleccionar una fuente entre las recuperadas y devuelve su fragmento original. Así, una respuesta siempre se puede contrastar con un documento y una versión.
 
+## Diseño y tecnologías
+
+Python 3.10+, SQLite y recuperación TF-IDF con normalización de acentos. Ollama puede seleccionar una fuente; n8n y Docker se incluyen como opciones de integración.
+
+[Diagrama de arquitectura](docs/architecture.md) · [Diagrama del flujo](docs/flow.md) · [Tecnologías y alcance](docs/technologies.md)
+
 ## Ejecutar
 
 Requiere Python 3.10 o superior. Desde la carpeta del repositorio:
